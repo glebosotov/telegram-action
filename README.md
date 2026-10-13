@@ -261,8 +261,8 @@ placeholders are replaced with values taken from the environment.
 
 ## Rich messages
 
-This branch requires a sender image with `rich_message_file` support; the image
-update is pending the corresponding `drone-telegram` release.
+The `runtime` branch builds the pinned sender from source until an upstream
+release includes rich-message support.
 
 Set `rich_message_file` to a checked-out or generated JSON file, for example:
 
