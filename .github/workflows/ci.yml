@@ -1,10 +1,11 @@
-name: Runtime image
+name: Publish runtime image
 on:
   push:
     branches: [runtime]
   workflow_dispatch:
 permissions:
   contents: read
+  packages: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,3 +14,12 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - run: docker build -t telegram-action:test .
       - run: docker run --rm --entrypoint /bin/drone-telegram telegram-action:test --help | grep rich.message.file
+      - name: Publish tested image
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          image="ghcr.io/$GITHUB_REPOSITORY:sha-$GITHUB_SHA"
+          docker tag telegram-action:test "$image"
+          docker push "$image"
