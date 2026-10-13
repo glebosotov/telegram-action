@@ -261,7 +261,7 @@ placeholders are replaced with values taken from the environment.
 
 ## Rich messages
 
-The `runtime` branch builds the pinned sender from source until an upstream
+The `runtime` branch uses a prebuilt image pinned by digest until an upstream
 release includes rich-message support.
 
 Set `rich_message_file` to a checked-out or generated JSON file, for example:
