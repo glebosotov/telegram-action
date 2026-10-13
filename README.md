@@ -129,6 +129,7 @@ add `TELEGRAM_TOKEN` and `TELEGRAM_TO`.
 | token                    | **required**. Telegram bot authorization token.                                                                         |
 | message                  | optional. Custom message. Falls back to the default message when empty.                                                 |
 | message_file             | optional. Overwrite the default message template with the contents of the specified file. Requires `actions/checkout`.  |
+| rich_message_file        | optional. Path to an `InputRichMessage` JSON file. Cannot be combined with `message` or `message_file`. |
 | message_thread_id        | optional. Unique identifier for the target message thread (topic) of the forum; for forum supergroups only.             |
 | format                   | optional. `markdown` or `html`. Plain text when empty. See [message formatting](#message-formatting) below.             |
 | photo                    | optional. Photo file path(s). Comma-separated list, glob patterns supported. Requires `actions/checkout`.               |
@@ -257,3 +258,17 @@ placeholders are replaced with values taken from the environment.
 | GITHUB_EVENT_NAME | github.event.name          |
 | GITHUB_EVENT_PATH | github.event.path          |
 | GITHUB_WORKSPACE  | github.workspace           |
+
+## Rich messages
+
+This branch requires a sender image with `rich_message_file` support; the image
+update is pending the corresponding `drone-telegram` release.
+
+Set `rich_message_file` to a checked-out or generated JSON file, for example:
+
+```json
+{"html":"<h2>Build completed</h2><details><summary>Details</summary>All checks passed.</details>","skip_entity_detection":true}
+```
+
+The file follows Telegram's [InputRichMessage](https://core.telegram.org/bots/api#inputrichmessage)
+format and is not template-rendered. `format` applies only to ordinary text messages.
