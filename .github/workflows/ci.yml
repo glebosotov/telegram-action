@@ -2,24 +2,52 @@ name: Publish runtime image
 on:
   push:
     branches: [runtime]
+  pull_request:
+    branches: [runtime]
   workflow_dispatch:
 permissions:
   contents: read
   packages: write
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - run: docker build -t telegram-action:test .
       - run: docker run --rm --entrypoint /bin/drone-telegram telegram-action:test --help | grep rich.message.file
+      - run: docker run --rm --entrypoint /bin/drone-telegram telegram-action:test --help | grep widget.file
       - name: Publish tested image
+        if: github.event_name != 'pull_request'
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          image="ghcr.io/$GITHUB_REPOSITORY:sha-$GITHUB_SHA-$ARCH"
+          docker tag telegram-action:test "$image"
+          docker push "$image"
+  publish-index:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Publish multi-platform index
         env:
           GHCR_TOKEN: ${{ github.token }}
         run: |
           printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           trap 'docker logout ghcr.io' EXIT
           image="ghcr.io/$GITHUB_REPOSITORY:sha-$GITHUB_SHA"
-          docker tag telegram-action:test "$image"
-          docker push "$image"
+          docker buildx imagetools create -t "$image" "$image-amd64" "$image-arm64"
+          docker buildx imagetools inspect "$image" --raw | jq -e '[.manifests[].platform | select(.os == "linux") | .architecture] | sort | unique == ["amd64", "arm64"]'
+          docker buildx imagetools inspect "$image"
