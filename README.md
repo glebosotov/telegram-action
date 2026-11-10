@@ -275,78 +275,34 @@ format and is not template-rendered. `format` applies only to ordinary text mess
 
 ## Widget messages
 
-Set `widget_file` to a UTF-8 JSON file in the checked-out workspace (maximum
-1 MiB). It is a [sendWidget](https://core.telegram.org/bots/api#sendwidget)
-request body without credentials or destination fields, not an InputRichMessage.
-The caller owns the HTML and any design-specific content:
+`widget_file` selects the Go sender's `sendWidget` mode. Supply a checked-out or
+generated UTF-8 JSON file containing caller-owned HTML and an optional caption:
 
 ```json
-{
-  "html": "<style>strong{color:var(--tg-theme-text-color)}</style><strong>Build passed</strong>",
-  "height": 80,
-  "caption": "Build passed — see the workflow run for details"
-}
+{"html":"<strong>Build passed</strong>","height":80,"caption":"Build passed — see the workflow run for details"}
 ```
 
-```yaml
-- uses: actions/checkout@v7
-- uses: glebosotov/telegram-action@<reviewed-commit-sha>
-  with:
-    token: ${{ secrets.TELEGRAM_TOKEN }}
-    to: ${{ secrets.TELEGRAM_TO }}
-    widget_file: notification.json
-```
+Use `token`, exactly one numeric `to`, `message_thread_id` and
+`disable_notification` as action inputs. These delivery settings must not appear
+in the JSON file. `widget_file` is mutually exclusive with `message`,
+`message_file`, `rich_message_file`, media/location/venue inputs, `format`, and
+enabled `disable_web_page_preview`. Existing proxy configuration is supported.
 
-The file contract is strict: unknown or duplicate keys and null values are
-rejected. Required: `html` (string). Optional fields:
+The [Go sender contract](https://github.com/glebosotov/drone-telegram/blob/c60044044ed7d2787dc1f4472d7332399f5b69b1/README.md#widget-messages)
+defines the allowed fields, caption formatting, HTML and compression limits,
+and failure behavior. HTML is not template-rendered. Widget mode suppresses
+payload debug logging, rejects redirects, and never retries or falls back to
+text. Telegram currently supports production widgets only in private chats.
+No query handler, server or Kubernetes component is supplied.
 
-- Strings: `public_data`, `chat_data`, `caption`, `parse_mode`,
-  `message_effect_id`.
-- Integers: `width`, `height` (Telegram clamps display dimensions).
-- Booleans: `show_caption_above_media`, `allow_queries`, `is_shared`,
-  `disable_notification`, `protect_content`, `allow_paid_broadcast`.
-- Objects: `reply_parameters`, `reply_markup`.
-- Array of objects: `caption_entities`.
+### Runtime rollout
 
-`token` and `to` come only from action inputs; `to` must contain exactly one
-destination. `message_thread_id`, when needed, also comes only from the action
-input. `disable_notification` may be supplied in the file or as an action input,
-but not both. Telegram validates nested entity and keyboard schemas.
-`allow_paid_broadcast: true` opts into Telegram's paid broadcast charges.
+The Dockerfile pins the Go sender source and checksum; the action remains a thin
+wrapper. PR checks build the Linux runtime and verify its widget and rich-message
+flags without publishing or sending Telegram messages.
 
-`widget_file` is mutually exclusive with `message`, `message_file`,
-`rich_message_file`, all media/location/venue inputs, `format`,
-`disable_web_page_preview` and `socks5`. Nonempty values for those inputs,
-including `false`, are rejected. Existing modes retain their existing sender.
-Widget requests ignore `debug` and ambient proxy variables and never print
-tokens, request bodies, response bodies, or underlying network exceptions.
-
-HTML must contain 1–32768 UTF-8 bytes and compress to at most 4096 bytes with zlib
-level 9. State strings each allow at most 1024 UTF-8 bytes. Plain captions allow
-at most 1024 characters. Formatted captions use `parse_mode` (`HTML`,
-`Markdown` or `MarkdownV2`) or `caption_entities`, never both; Telegram
-validates the 1024-character limit after entity parsing for parse modes.
-HTML fragments are accepted. This action checks types and sizes, not the full
-[widget HTML/CSS/JavaScript profile](https://core.telegram.org/bots/widgets);
-Telegram and its clients enforce that profile. Use inline resources: widgets
-have no network access.
-
-Production widgets currently work only in private chats with the bot and cannot
-be forwarded. Captions provide context on clients that do not support widgets.
-This action performs one POST, with a 30-second socket timeout, and rejects
-redirects. Failures exit nonzero with no retry or text fallback. After a timeout,
-delivery may have succeeded; inspect the chat before rerunning the workflow.
-No query handler or server is provided: enabling `allow_queries` requires a
-separately managed bot handler if responses are desired.
-
-### Testing and runtime packaging
-
-Run `python3 -m unittest discover -s tests -p 'test_*.py'` and
-`sh -n entrypoint.sh`. Tests use fake transports and never contact Telegram.
-
-The Dockerfile includes both senders. Pull requests build and test that image
-without publishing it. The action retains its existing prebuilt-image digest;
-that image does not support `widget_file` yet. Widget usage requires publishing
-the reviewed image and updating `runs.image` to its immutable digest before
-consumers pin the new action commit. Merging into `runtime` triggers the existing
-publication workflow, so merge only when publication is approved.
+`runs.image` intentionally retains the existing prebuilt image digest, which
+does not support `widget_file`. This change is for review only. After explicit
+release approval, publish the reviewed runtime image, update `runs.image` to its
+immutable digest, and only then update consumers. Merging into `runtime` triggers
+the existing publisher, so do not merge before that approval.

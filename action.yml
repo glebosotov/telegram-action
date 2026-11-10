@@ -15,7 +15,7 @@ inputs:
   rich_message_file:
     description: "InputRichMessage JSON file; mutually exclusive with message, message_file and widget_file"
   widget_file:
-    description: "UTF-8 JSON sendWidget payload without credentials or destination; exclusive with message, rich message and media inputs. See README."
+    description: "Go sender sendWidget JSON file without credentials or delivery settings; exclusive with message, rich message and media inputs. See README."
   socks5:
     description: 'support socks5 proxy URL'
   photo:
