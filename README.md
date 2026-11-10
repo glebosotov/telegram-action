@@ -272,3 +272,15 @@ Set `rich_message_file` to a checked-out or generated JSON file, for example:
 
 The file follows Telegram's [InputRichMessage](https://core.telegram.org/bots/api#inputrichmessage)
 format and is not template-rendered. `format` applies only to ordinary text messages.
+
+## Widget messages
+
+`widget_file` passes a caller-owned HTML/caption JSON file to the Go sender.
+See its [input contract and limits](https://github.com/glebosotov/drone-telegram/blob/db67a8481f4ef0ba3663f447e9d73a094c64006a/README.md#widget-messages).
+Credentials and delivery settings remain action inputs; other message/media
+modes cannot be combined with widgets.
+
+**Release approval required:** the Dockerfile pins the new sender, but
+`runs.image` still points to the existing image without widget support.
+After approval, publish the runtime image and update its digest before adopting
+`widget_file`. Merging into `runtime` triggers publication.
