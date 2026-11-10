@@ -46,7 +46,7 @@ inputs:
     description: 'unique identifier for the target message thread (topic) of the forum; for forum supergroups only'
 runs:
   using: 'docker'
-  image: 'docker://ghcr.io/glebosotov/telegram-action@sha256:8c9bb386867feade53d70d2ab69bb0a7218c3ea5baa70de63e78e408c60c4228'
+  image: 'docker://ghcr.io/glebosotov/telegram-action@sha256:ea18601dfbb33954deadbcbf7085a7e1e4440a6637a2ec1563deab49cf504703'
 
 branding:
   icon: 'message-square'
