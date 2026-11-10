@@ -275,34 +275,12 @@ format and is not template-rendered. `format` applies only to ordinary text mess
 
 ## Widget messages
 
-`widget_file` selects the Go sender's `sendWidget` mode. Supply a checked-out or
-generated UTF-8 JSON file containing caller-owned HTML and an optional caption:
+`widget_file` passes a caller-owned HTML/caption JSON file to the Go sender.
+See its [input contract and limits](https://github.com/glebosotov/drone-telegram/blob/db67a8481f4ef0ba3663f447e9d73a094c64006a/README.md#widget-messages).
+Credentials and delivery settings remain action inputs; other message/media
+modes cannot be combined with widgets.
 
-```json
-{"html":"<strong>Build passed</strong>","height":80,"caption":"Build passed — see the workflow run for details"}
-```
-
-Use `token`, exactly one numeric `to`, `message_thread_id` and
-`disable_notification` as action inputs. These delivery settings must not appear
-in the JSON file. `widget_file` is mutually exclusive with `message`,
-`message_file`, `rich_message_file`, media/location/venue inputs, `format`, and
-enabled `disable_web_page_preview`. Existing proxy configuration is supported.
-
-The [Go sender contract](https://github.com/glebosotov/drone-telegram/blob/c60044044ed7d2787dc1f4472d7332399f5b69b1/README.md#widget-messages)
-defines the allowed fields, caption formatting, HTML and compression limits,
-and failure behavior. HTML is not template-rendered. Widget mode suppresses
-payload debug logging, rejects redirects, and never retries or falls back to
-text. Telegram currently supports production widgets only in private chats.
-No query handler, server or Kubernetes component is supplied.
-
-### Runtime rollout
-
-The Dockerfile pins the Go sender source and checksum; the action remains a thin
-wrapper. PR checks build the Linux runtime and verify its widget and rich-message
-flags without publishing or sending Telegram messages.
-
-`runs.image` intentionally retains the existing prebuilt image digest, which
-does not support `widget_file`. This change is for review only. After explicit
-release approval, publish the reviewed runtime image, update `runs.image` to its
-immutable digest, and only then update consumers. Merging into `runtime` triggers
-the existing publisher, so do not merge before that approval.
+**Release approval required:** the Dockerfile pins the new sender, but
+`runs.image` still points to the existing image without widget support.
+After approval, publish the runtime image and update its digest before adopting
+`widget_file`. Merging into `runtime` triggers publication.
