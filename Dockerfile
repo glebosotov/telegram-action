@@ -1,6 +1,6 @@
 FROM golang:1.26.7-alpine3.23@sha256:b17af760035fc2f338eed92d448a6c67f2d45438844fc6c60678fa5f99e44b57 AS build
 WORKDIR /src
-ADD --checksum=sha256:c7037dac032dbfea9d349eab34351d223758d658683deb9a82161233e4dc6fd7 https://codeload.github.com/glebosotov/drone-telegram/tar.gz/db67a8481f4ef0ba3663f447e9d73a094c64006a /tmp/sender.tar.gz
+ADD --checksum=sha256:3727b90543e254fff77e04311d04f838b35b020740ea10a843fb406904423bbe https://codeload.github.com/glebosotov/drone-telegram/tar.gz/59be8ecf3422697708c1d441742847f98508944f /tmp/sender.tar.gz
 RUN tar -xzf /tmp/sender.tar.gz --strip-components=1 && go test ./... && CGO_ENABLED=0 go build -trimpath -o /bin/drone-telegram .
 
 FROM alpine:3.23@sha256:85fe1e81d6758c208f3e1eed4338a1997e19d4be002d4dd32d3100c9a8c010a0
