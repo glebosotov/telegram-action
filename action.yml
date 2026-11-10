@@ -13,7 +13,9 @@ inputs:
   message_file:
     description: 'overwrite the default message template with the contents of the specified file'
   rich_message_file:
-    description: "InputRichMessage JSON file; mutually exclusive with message and message_file"
+    description: "InputRichMessage JSON file; mutually exclusive with message, message_file and widget_file"
+  widget_file:
+    description: "UTF-8 JSON sendWidget payload without credentials or destination; exclusive with message, rich message and media inputs. See README."
   socks5:
     description: 'support socks5 proxy URL'
   photo:

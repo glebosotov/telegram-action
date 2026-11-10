@@ -4,8 +4,9 @@ ADD --checksum=sha256:af3ca168ed3929ff18697d6549c1eb1cc47f7af8456dcc2b85afdfae49
 RUN tar -xzf /tmp/sender.tar.gz --strip-components=1 && go test ./... && CGO_ENABLED=0 go build -trimpath -o /bin/drone-telegram .
 
 FROM alpine:3.23@sha256:85fe1e81d6758c208f3e1eed4338a1997e19d4be002d4dd32d3100c9a8c010a0
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates python3
 COPY --from=build /bin/drone-telegram /bin/drone-telegram
+COPY widget.py /widget.py
 COPY entrypoint.sh /entrypoint.sh
 WORKDIR /github/workspace
 ENTRYPOINT ["/entrypoint.sh"]
